@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-gray-800: #1a1e29;
+  --color-gray-900: #11151f;
+  --color-gray-950: #0a0c13;
+
+  --color-primary-400: #22d3ee; /* Cyan 400 */
+  --color-primary-500: #06b6d4; /* Cyan 500 */
+  --color-primary-600: #0891b2; /* Cyan 600 */
+  --color-primary-900: #164e63; /* Cyan 900 */
+
+  /* Glassmorphism Utilities */
+  --color-glass-dark: rgba(17, 21, 31, 0.7);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-glow: rgba(34, 211, 238, 0.15);
+}
+
+/* Configure Tailwind CSS v4 class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Basic reset and global styles */
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-900);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--color-gray-950);
+    color: #f8fafc;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-gray-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-800);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-700);
+}
+
+/* Glass Utilities (Tailwind v4 allows custom classes here or in components) */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+  }
+  .glass-card {
+    @apply bg-white/50 dark:bg-gray-800/50 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-lg;
+  }
+  .glow-primary {
+    box-shadow: 0 0 20px var(--color-glass-glow);
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-cyan-400 dark:to-blue-500;
+  }
+}
