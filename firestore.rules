@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: is the owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper: is a PT assigned to this client
+    function isAssignedPT(clientId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(clientId)).data.ptAssigned == request.auth.uid;
+    }
+
+    // Helper: can access client data
+    function canAccessClientData(clientId) {
+      return isOwner(clientId) || isAssignedPT(clientId);
+    }
+
+    // --- USERS COLLECTION ---
+    match /users/{userId} {
+      // A user can read their own profile, or a PT can read their client's profile
+      allow read: if canAccessClientData(userId);
+      // A user can update their own profile. A PT cannot alter a client's profile settings directly (except maybe assignment)
+      allow write: if isOwner(userId);
+
+      // Subcollection: personalRecords
+      match /personalRecords/{exerciseId} {
+        allow read, write: if canAccessClientData(userId);
+      }
+    }
+
+    // --- WORKOUTS COLLECTION ---
+    match /workouts/{workoutId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null || // allow creation
+        resource.data.ptId == request.auth.uid || 
+        resource.data.clientId == request.auth.uid
+      );
+    }
+
+    // --- EXERCISES COLLECTION ---
+    match /exercises/{exerciseId} {
+      // Any authenticated user can read exercises (some might be global or PT specific)
+      allow read: if isAuthenticated();
+      // Only PTs should create/modify exercises (or users can create their own custom ones)
+      allow write: if isAuthenticated() && (
+        resource == null || resource.data.ptId == request.auth.uid
+      );
+    }
+
+    // --- LOGS COLLECTION ---
+    match /logs/{logId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || 
+        isAssignedPT(resource.data.userId) // Wait, we can't easily check resource.data.userId in a query if we don't have it.
+        // Actually, for query security we use `userId == request.auth.uid`
+      );
+    }
+
+    // --- SESSIONS COLLECTION ---
+    match /workoutSessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // --- MEASUREMENTS COLLECTION ---
+    match /bodyMeasurements/{measurementId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Fallback block everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
