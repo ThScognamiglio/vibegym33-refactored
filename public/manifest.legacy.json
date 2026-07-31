@@ -1,0 +1,19 @@
+{
+  "short_name": "Vibe Gym",
+  "name": "Vibe Gym - Coaching Platform",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554042.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#030712",
+  "background_color": "#030712",
+  "description": "Vibe Gym: Monitoraggio avanzato e connessione PT-Cliente."
+}
