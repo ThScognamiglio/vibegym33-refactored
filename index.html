@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Primary Meta Tags -->
+    <title>Vibe Gym | Premium Online Coaching</title>
+    <meta name="title" content="Vibe Gym | Premium Online Coaching">
+    <meta name="description" content="Traccia i tuoi allenamenti, analizza il volume in tempo reale e raggiungi nuovi record con il tuo Personal Trainer.">
+    
+    <!-- Theme and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" type="image/png" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vibe Gym">
+    <link rel="apple-touch-startup-image" href="/icon-512x512.png">
+    
+    <!-- PWA Splash Screen Generation for iOS -->
+    <script>
+      // Ensures the splash screen matches the device viewport on iOS
+      if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+          // If already in standalone mode, this helps mitigate white flashes
+          document.documentElement.style.backgroundColor = '#111827';
+      }
+    </script>
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vibegym.app/">
+    <meta property="og:title" content="Vibe Gym | Premium Online Coaching">
+    <meta property="og:description" content="Traccia i tuoi allenamenti e massimizza i risultati con Vibe Gym.">
+    <meta property="og:image" content="https://vibegym.app/icon-512x512.png">
+</head>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/src/app/index.tsx"></script>
+</body>
+</html>
