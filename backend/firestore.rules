@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. HELPER FUNCTIONS
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function isPT() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "pt";
+    }
+
+    function isPtOfClient(clientId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(clientId)).data.ptAssigned == request.auth.uid;
+    }
+
+    function getWorkout() {
+      return get(/databases/$(database)/documents/workouts/$(workoutId)).data;
+    }
+
+    // 2. RULES
+
+    // UTENTI
+    match /users/{userId} {
+      allow create: if isOwner(userId) && !request.resource.data.keys().hasAny(['isAdmin']) && (request.resource.data.role == "pt" || request.resource.data.role == "client");
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isActive', 'role'])) || isAdmin();
+      
+      // Strict Multi-tenant Read Access
+      allow get: if isOwner(userId) || isAdmin() || isPtOfClient(userId) || (isAuthenticated() && resource.data.role == "pt");
+      
+      // Strict Multi-tenant List Access
+      // Firestore proverà se le query soddisfano questi vincoli
+      allow list: if isAdmin() || (isAuthenticated() && (resource.data.role == "pt" || resource.data.ptAssigned == request.auth.uid));
+    }
+
+    // LINK PT-CLIENTE
+    match /ptClients/{ptId}/clientRefs/{clientId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid == ptId || request.auth.uid == clientId || isPT());
+    }
+
+    // ESERCIZI
+    match /exercises/{exerciseId} {
+      allow read: if isAuthenticated(); // Gli esercizi in sé non sono dati sensibili, sono un catalogo globale
+      allow create: if isPT() && request.resource.data.ptId == request.auth.uid;
+      allow update, delete: if isPT() && resource.data.ptId == request.auth.uid;
+    }
+
+    // SCHEDE (WORKOUTS)
+    match /workouts/{workoutId} {
+      allow create: if isPT() && request.resource.data.ptId == request.auth.uid;
+      allow read: if isAuthenticated() && (
+        resource.data.ptId == request.auth.uid || 
+        resource.data.clientId == request.auth.uid || 
+        isAdmin()
+      );
+      allow update, delete: if isPT() && resource.data.ptId == request.auth.uid;
+    }
+
+    match /workouts/{workoutId}/items/{itemId} {
+      allow read: if isAuthenticated() && (
+        getWorkout().ptId == request.auth.uid || 
+        getWorkout().clientId == request.auth.uid || 
+        isAdmin()
+      );
+      allow write: if isPT() && getWorkout().ptId == request.auth.uid;
+    }
+
+    // LOGS, SESSIONI e MISURE (Dati del Cliente)
+    match /users/{userId}/logs/{logId} {
+      allow create, update, delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isPtOfClient(userId);
+    }
+
+    match /users/{userId}/sessions/{sessionId} {
+      allow create, update, delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isPtOfClient(userId);
+    }
+
+    match /users/{userId}/measurements/{measId} {
+      allow read, write: if isOwner(userId) || isPtOfClient(userId);
+    }
+
+    match /users/{userId}/personalRecords/{exerciseId} {
+      allow read: if isOwner(userId) || isPtOfClient(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // SOMMARI
+    match /clientExerciseSummaries/{clientId}/exercises/{exerciseId} {
+      allow read, write: if isOwner(clientId) || isPtOfClient(clientId);
+    }
+
+    match /clientPlanSummaries/{clientId}/plans/{planId} {
+      allow read, write: if isOwner(clientId) || isPtOfClient(clientId);
+    }
+
+    // GRUPPI MUSCOLARI
+    match /muscleGroups/{groupId} {
+      allow read: if isAuthenticated(); 
+      allow write: if isAdmin();
+    }
+
+    // ARCHIVIO IBRIDO HOT/COLD
+    match /users/{userId}/history_snapshot/{monthId} {
+      allow read: if isOwner(userId) || isPtOfClient(userId);
+      allow write: if isOwner(userId);
+    }
+
+    match /users/{userId}/history_snapshot_preview/{monthId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
